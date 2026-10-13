@@ -1,0 +1,48 @@
+name: Set up web build
+description: >
+  Installs the pinned toolchain for the web interface: Rust with the
+  wasm32 target, wasm-bindgen-cli matching Cargo.lock, wasm-opt from
+  binaryen, Node from web/.nvmrc, and the web dependencies.
+
+inputs:
+  rust-toolchain:
+    description: Rust version used to build the WebAssembly module.
+    default: "1.94.1"
+  wasm-bindgen-version:
+    description: Must equal the wasm-bindgen version in Cargo.lock.
+    default: "0.2.129"
+  binaryen-version:
+    description: binaryen release that provides wasm-opt.
+    default: "133"
+
+runs:
+  using: composite
+  steps:
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ inputs.rust-toolchain }}
+        targets: wasm32-unknown-unknown
+        components: clippy
+
+    - uses: taiki-e/install-action@v2
+      with:
+        tool: wasm-bindgen@${{ inputs.wasm-bindgen-version }}
+
+    - name: Install wasm-opt (binaryen ${{ inputs.binaryen-version }})
+      shell: bash
+      run: |
+        release="binaryen-version_${{ inputs.binaryen-version }}"
+        curl -sSfL "https://github.com/WebAssembly/binaryen/releases/download/version_${{ inputs.binaryen-version }}/${release}-x86_64-linux.tar.gz" \
+          | tar -xz -C "$RUNNER_TEMP"
+        echo "$RUNNER_TEMP/${release}/bin" >> "$GITHUB_PATH"
+
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: web/.nvmrc
+        cache: npm
+        cache-dependency-path: web/package-lock.json
+
+    - name: Install web dependencies
+      shell: bash
+      working-directory: web
+      run: npm ci
