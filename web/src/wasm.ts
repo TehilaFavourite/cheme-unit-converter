@@ -119,8 +119,17 @@ function internalError(message: string): ConvertFailure {
 export async function loadConverter(): Promise<Converter> {
   await init();
   const catalogue: unknown = rawCatalogue();
-  if (!isRecord(catalogue) || !Array.isArray(catalogue["quantities"])) {
-    throw new Error("The converter module returned an unexpected catalogue.");
+  const context = isRecord(catalogue) ? catalogue["context"] : undefined;
+  const complete =
+    isRecord(catalogue) &&
+    Array.isArray(catalogue["quantities"]) &&
+    Array.isArray(context) &&
+    context.every(
+      (entry) =>
+        isRecord(entry) && typeof entry["key"] === "string" && typeof entry["param"] === "string",
+    );
+  if (!complete) {
+    throw new Error("The converter module returned an unexpected catalogue. Rebuild it.");
   }
   return {
     catalogue: catalogue as unknown as Catalogue,

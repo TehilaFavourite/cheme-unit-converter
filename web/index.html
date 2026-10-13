@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Convert chemical engineering units: temperature, pressure, flow, composition, density, viscosity, energy and heat transfer."
+    />
+    <title>ChemE unit converter</title>
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <main class="sheet">
+      <header class="masthead">
+        <h1>ChemE unit converter</h1>
+      </header>
+
+      <form id="converter" class="converter" novalidate autocomplete="off">
+        <div class="field">
+          <label for="value">Value</label>
+          <input
+            id="value"
+            name="value"
+            class="input input-number"
+            type="text"
+            inputmode="decimal"
+            spellcheck="false"
+            aria-describedby="value-message"
+          />
+          <p id="value-message" class="message" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="quantity">Quantity</label>
+          <select id="quantity" name="quantity" class="input"></select>
+        </div>
+
+        <div class="units">
+          <div class="field">
+            <label for="from">From</label>
+            <input
+              id="from"
+              name="from"
+              class="input input-unit"
+              type="text"
+              list="unit-options"
+              spellcheck="false"
+              aria-describedby="from-message"
+            />
+            <p id="from-message" class="message" hidden></p>
+          </div>
+          <button id="swap" class="button swap" type="button">Swap</button>
+          <div class="field">
+            <label for="to">To</label>
+            <input
+              id="to"
+              name="to"
+              class="input input-unit"
+              type="text"
+              list="unit-options"
+              spellcheck="false"
+              aria-describedby="to-message"
+            />
+            <p id="to-message" class="message" hidden></p>
+          </div>
+          <datalist id="unit-options"></datalist>
+        </div>
+
+        <div class="field field-short">
+          <label for="sig-figs">Significant figures <span class="hint">optional</span></label>
+          <input
+            id="sig-figs"
+            name="sig-figs"
+            class="input input-number"
+            type="text"
+            inputmode="numeric"
+            spellcheck="false"
+            aria-describedby="sig-figs-message"
+          />
+          <p id="sig-figs-message" class="message" hidden></p>
+        </div>
+
+        <fieldset id="context" class="context" hidden>
+          <legend>Conditions for this conversion</legend>
+          <div id="context-fields" class="context-fields"></div>
+        </fieldset>
+      </form>
+
+      <section class="result" aria-labelledby="result-heading">
+        <h2 id="result-heading" class="visually-hidden">Result</h2>
+        <div id="result" class="result-body" aria-live="polite" aria-atomic="true"></div>
+        <div class="result-actions">
+          <button id="copy" class="button" type="button" disabled>Copy result</button>
+          <span id="copy-status" class="copy-status" role="status"></span>
+        </div>
+      </section>
+
+      <details class="reference">
+        <summary>All units and accepted spellings</summary>
+        <div id="reference" class="reference-body"></div>
+      </details>
+
+      <footer class="colophon">
+        <a href="https://github.com/TehilaFavourite/cheme-unit-converter"
+          >Source and command-line version</a
+        >
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
