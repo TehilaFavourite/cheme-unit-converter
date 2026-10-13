@@ -276,6 +276,14 @@ fn value_and_unit(
         return Ok(None);
     };
     let value = parse_number(value, Field::Context(key))?;
+    // A unit is never assumed: a value without one is incomplete.
+    if input.unit.trim().is_empty() {
+        return Err(ApiError::new(
+            ErrorKind::EmptyInput,
+            Field::Context(key),
+            format!("choose a unit for the {}", key.item().description()),
+        ));
+    }
     let unit =
         parse_unit(&input.unit).map_err(|error| ApiError::unit(&error, Field::Context(key)))?;
     Ok(Some((value, unit)))

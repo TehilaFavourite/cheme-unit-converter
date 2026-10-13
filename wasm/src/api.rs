@@ -575,6 +575,12 @@ mod tests {
         let error = failure(convert(&gauge_atmosphere));
         assert_eq!(error.kind, ErrorKind::WrongContextUnit);
 
+        let mut no_unit = request("30", "psig", "bar");
+        no_unit.context.atmospheric_pressure = quantity("101.325", " ");
+        let error = failure(convert(&no_unit));
+        assert_eq!(error.kind, ErrorKind::EmptyInput);
+        assert_eq!(error.field, Field::Context(ContextKey::AtmosphericPressure));
+
         let mut sig_figs = request("1", "C", "F");
         sig_figs.sig_figs = Some("18".into());
         assert_eq!(failure(convert(&sig_figs)).kind, ErrorKind::InvalidSigFigs);
