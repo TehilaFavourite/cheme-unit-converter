@@ -39,6 +39,7 @@ mod density;
 mod energy;
 mod error;
 mod flow;
+mod format;
 mod heat_transfer;
 mod linear;
 mod pressure;
@@ -52,6 +53,9 @@ pub use density::{Density, DensityUnit};
 pub use energy::{Energy, EnergyUnit, Power, PowerUnit};
 pub use error::{ContextItem, ConversionError, Quantity};
 pub use flow::{FlowRate, FlowRateUnit};
+pub use format::{
+    DEFAULT_SIGNIFICANT_FIGURES, MAX_SIGNIFICANT_FIGURES, SignificantFigures, format_value,
+};
 pub use heat_transfer::{
     HeatFlux, HeatFluxUnit, HeatTransferCoefficient, HeatTransferCoefficientUnit, SpecificEnthalpy,
     SpecificEnthalpyUnit, SpecificHeat, SpecificHeatUnit, ThermalConductivity,

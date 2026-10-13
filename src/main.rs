@@ -16,8 +16,9 @@
 use std::process::ExitCode;
 
 use cheme_unit_converter::{
-    ContextItem, ConversionContext, ConversionError, ParseUnitError, Pressure, PressureUnit,
-    Quantity, Temperature, TemperatureUnit, Unit, convert, parse_unit,
+    ContextItem, ConversionContext, ConversionError, MAX_SIGNIFICANT_FIGURES, ParseUnitError,
+    Pressure, PressureUnit, Quantity, SignificantFigures, Temperature, TemperatureUnit, Unit,
+    convert, format_value, parse_unit,
 };
 
 const NAME: &str = "cheme-unit-converter";
@@ -54,9 +55,6 @@ Examples:
   cheme-unit-converter convert 40.65 kJ/mol kJ/kg --molar-mass 18.015
 
 Exit status: 0 on success, 1 if the conversion fails, 2 for invalid usage.";
-
-const DEFAULT_SIGNIFICANT_FIGURES: usize = 10;
-const MAX_SIGNIFICANT_FIGURES: usize = 17;
 
 /// A command failure, split by whether the command line or the conversion
 /// was at fault so each can get its own exit status.
@@ -142,15 +140,7 @@ fn convert_command(args: &[String]) -> Result<(), CliError> {
     let options = parse_options(&options)?;
     let result = convert(value, from, to, options.context)?;
 
-    let digits = options
-        .significant_figures
-        .unwrap_or(DEFAULT_SIGNIFICANT_FIGURES);
-    let formatted = format_significant(result, digits);
-    let formatted = if options.significant_figures.is_some() {
-        formatted
-    } else {
-        trim_insignificant_zeros(&formatted)
-    };
+    let formatted = format_value(result, options.significant_figures);
     println!("{input} {from} = {formatted} {to}");
     Ok(())
 }
@@ -202,7 +192,7 @@ fn split_arguments(args: &[String]) -> Result<(Vec<&str>, Vec<RawOption<'_>>), C
 #[derive(Debug, Default)]
 struct Options {
     context: ConversionContext,
-    significant_figures: Option<usize>,
+    significant_figures: Option<SignificantFigures>,
 }
 
 /// Options as given on the command line, before pressures and temperatures
@@ -220,7 +210,7 @@ struct RawOptions {
     pressure: Option<(f64, PressureUnit)>,
     reference_temperature: Option<(f64, TemperatureUnit)>,
     temperature: Option<(f64, TemperatureUnit)>,
-    significant_figures: Option<usize>,
+    significant_figures: Option<SignificantFigures>,
 }
 
 /// Reads physical properties, reference conditions, and output settings.
@@ -275,7 +265,7 @@ fn parse_options(options: &[RawOption<'_>]) -> Result<Options, CliError> {
                 let digits = values[0]
                     .parse::<usize>()
                     .ok()
-                    .filter(|digits| (1..=MAX_SIGNIFICANT_FIGURES).contains(digits))
+                    .and_then(SignificantFigures::new)
                     .ok_or_else(|| {
                         usage_error(format!(
                             "option '--sig-figs' expects a whole number from 1 to \
@@ -470,42 +460,6 @@ fn unit_listing() -> String {
     text
 }
 
-/// Removes trailing zeros after the decimal point, in fixed or scientific
-/// notation. Used for default output, where trailing zeros carry no meaning.
-fn trim_insignificant_zeros(number: &str) -> String {
-    fn trim_fraction(number: &str) -> &str {
-        if number.contains('.') {
-            number.trim_end_matches('0').trim_end_matches('.')
-        } else {
-            number
-        }
-    }
-    match number.split_once('e') {
-        Some((mantissa, exponent)) => format!("{}e{exponent}", trim_fraction(mantissa)),
-        None => trim_fraction(number).to_string(),
-    }
-}
-
-/// Formats `value` to `digits` significant figures, keeping trailing zeros
-/// because they are significant. Uses scientific notation, as `%g` does,
-/// when the exponent is below −4 or at least `digits`.
-fn format_significant(value: f64, digits: usize) -> String {
-    // Adding 0.0 turns −0 into +0, so a zero result never prints as "-0".
-    let value = value + 0.0;
-    let scientific = format!("{value:.precision$e}", precision = digits - 1);
-    let (_, exponent) = scientific
-        .split_once('e')
-        .expect("scientific formatting always has an exponent");
-    let exponent: i32 = exponent.parse().expect("exponent is an integer");
-    let digits = i32::try_from(digits).expect("at most MAX_SIGNIFICANT_FIGURES digits");
-    if (-4..digits).contains(&exponent) {
-        let decimals = usize::try_from(digits - 1 - exponent).unwrap_or(0);
-        format!("{value:.decimals$}")
-    } else {
-        scientific
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -518,27 +472,6 @@ mod tests {
         let args = strings(values);
         let (_, raw) = split_arguments(&args)?;
         parse_options(&raw)
-    }
-
-    #[test]
-    fn formats_significant_figures() {
-        assert_eq!(format_significant(77.0, 3), "77.0");
-        assert_eq!(format_significant(9.996, 3), "10.0");
-        assert_eq!(format_significant(12_345.0, 3), "1.23e4");
-        assert_eq!(format_significant(0.000_123_4, 2), "0.00012");
-        assert_eq!(format_significant(0.000_012_34, 2), "1.2e-5");
-        assert_eq!(format_significant(0.0, 3), "0.00");
-        assert_eq!(format_significant(-0.0, 3), "0.00");
-    }
-
-    #[test]
-    fn default_format_keeps_ten_significant_figures() {
-        let default = |value| trim_insignificant_zeros(&format_significant(value, 10));
-        assert_eq!(default(212.0), "212");
-        assert_eq!(default(0.25), "0.25");
-        assert_eq!(default(1e-12), "1e-12");
-        assert_eq!(default(0.000_293_071_070_172_222), "0.0002930710702");
-        assert_eq!(default(-0.0), "0");
     }
 
     #[test]
