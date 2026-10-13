@@ -20,6 +20,7 @@ conductivity, heat flux, specific heat, specific enthalpy).
 - [Context-dependent conversions](#context-dependent-conversions)
 - [Engineering assumptions](#engineering-assumptions)
 - [Library usage](#library-usage)
+- [Web interface](#web-interface)
 - [Project layout](#project-layout)
 - [License](#license)
 
@@ -274,21 +275,92 @@ The per-quantity types (`Temperature`, `Pressure`, `FlowRate`, `Energy`,
 `HeatTransferCoefficient`, `SpecificHeat`, and so on) are also public. See
 `cargo doc --open`.
 
+## Web interface
+
+**Live:** <https://tehilafavourite.github.io/cheme-unit-converter/>
+
+The same Rust code runs in the browser as WebAssembly. Conversions update as you type, context fields
+(density, atmospheric pressure, reference conditions, ...) appear only when the library reports them
+missing, and every conversion is a shareable link such as
+`?v=30&from=psig&to=bar&atm=101.325kPa`. A parity test runs the CLI and the web build on the same inputs
+and requires identical output.
+
+### Architecture
+
+```text
+ web/ (TypeScript, no framework)            wasm/ (Rust, cdylib)            root crate (Rust, no deps)
+┌──────────────────────────────┐  JSON   ┌───────────────────────────┐   ┌─────────────────────────┐
+│ main.ts   events → state     │────────▶│ catalogue()               │──▶│ Unit::all, parse_unit   │
+│ state.ts  state ⇄ URL (pure) │         │ convert(request)          │──▶│ convert, Pressure::new… │
+│ ui/*.ts   render functions   │◀────────│ resolveUnit(text)         │──▶│ format_value            │
+│ wasm.ts   typed wrapper      │ typed   │ errors: kind/field/missing│   │ ConversionError, …      │
+└──────────────────────────────┘ errors  └───────────────────────────┘   └─────────────────────────┘
+```
+
+- **Rust is the single source of truth:** units, aliases, parsing, validation, context rules, messages
+  and number formatting. TypeScript holds state and renders.
+- **The boundary is three JSON functions** that never throw. Errors are typed, so a missing context item
+  reveals exactly the field it names.
+- **Design decisions** are recorded in [docs/adr/](docs/adr/), and the visual design in
+  [docs/design.md](docs/design.md).
+
+### Local development
+
+Requirements: Node 22 or 24, the `wasm32-unknown-unknown` target, `wasm-bindgen-cli` at the version in
+`Cargo.lock`, and `wasm-opt` from binaryen.
+
+```sh
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version "=0.2.129" --locked
+brew install binaryen               # or a binaryen release from GitHub
+
+cd web
+npm ci
+npm run build:wasm                  # Rust → web/src/generated/
+npm run dev                         # http://localhost:5173
+```
+
+Run `npm run build:wasm` again after changing Rust code.
+
+### Tests
+
+```sh
+cargo test -p cheme-unit-converter-wasm                       # binding crate + CLI parity
+cargo test -p cheme-unit-converter-wasm \
+  --target wasm32-unknown-unknown --test web                  # wasm-bindgen-test in Node
+cd web
+npm test                                                      # Vitest: state and URL
+npm run lint && npm run format:check && npx tsc --noEmit
+npx playwright install chromium && npm run test:e2e           # Playwright + axe
+npm run build && ../scripts/size-report.sh                    # gzip size budget
+```
+
 ## Project layout
 
 ```text
 cheme-unit-converter/
-├── .github/workflows/ci.yml   # Tests (Linux, macOS, Windows), lint, docs, MSRV
+├── .github/
+│   ├── actions/setup-web/     # Pinned web toolchain, shared by CI and Pages
+│   └── workflows/             # ci.yml (Rust, MSRV, web), pages.yml (deploy)
 ├── CHANGELOG.md
 ├── Cargo.toml
 ├── LICENSE
 ├── README.md
+├── docs/
+│   ├── adr/             # Architecture decision records
+│   └── design.md        # Visual design of the web interface
+├── scripts/
+│   ├── build-wasm.sh    # cargo → wasm-bindgen → wasm-opt
+│   └── size-report.sh   # gzip sizes against the budget
 ├── tests/
 │   ├── cli.rs           # Runs the binary: output, errors, exit status
 │   └── round_trip.rs    # Every unit pair converts there and back
+├── wasm/                # cheme-unit-converter-wasm: JSON bindings, parity tests
+├── web/                 # Vite + TypeScript interface, Vitest and Playwright tests
 └── src/
     ├── lib.rs           # Public API, convert(), shared test helpers
-    ├── main.rs          # Command-line parsing, help, output formatting
+    ├── main.rs          # Command-line parsing and help
+    ├── format.rs        # Result formatting shared by the CLI and web
     ├── unit.rs          # Unit registry, labels, aliases, parse_unit()
     ├── error.rs         # ConversionError, Quantity, ContextItem
     ├── context.rs       # ConversionContext

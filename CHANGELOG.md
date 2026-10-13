@@ -8,6 +8,18 @@ All notable changes to this project are documented here. The format follows
 
 First version.
 
+### Web interface
+
+- A browser interface at <https://tehilafavourite.github.io/cheme-unit-converter/>, built from the same Rust
+  code as WebAssembly. It converts as you type, reveals context fields only when the library reports them
+  missing, marks supplied context a conversion does not use, and keeps every conversion in a shareable URL.
+- `cheme-unit-converter-wasm`, a binding crate exposing `catalogue`, `convert` and `resolveUnit` with typed
+  errors. A parity test checks its output against the CLI on 53 cases.
+- `format_value` and `SignificantFigures` in the library, shared by the CLI and the web interface. CLI
+  output is unchanged.
+- CI covers the web build (wasm-bindgen-test, tsc, ESLint, Prettier, Vitest, Playwright with axe, and a
+  gzip size budget). GitHub Pages deploys after CI passes on `main`.
+
 ### Command-line tool
 
 - `convert <value> <from-unit> <to-unit> [options]`, `units`, `--help`, and

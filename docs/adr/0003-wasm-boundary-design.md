@@ -29,7 +29,7 @@ None of them throws: every failure is a value.
 
 | Export | Returns |
 | --- | --- |
-| `catalogue()` | Every quantity with its units (label and aliases), and every context item with its description and input kind |
+| `catalogue()` | Every quantity with its units (label and aliases), and every context item with its description, input kind and query-string name |
 | `convert(request)` | `{ ok: true, value, formatted, from, to, quantity, used }` or `{ ok: false, error: { kind, message, field, missing? } }` |
 | `resolveUnit(text)` | `{ ok: true, label, quantity }` or `{ ok: false, message }` |
 
@@ -45,9 +45,10 @@ The exact TypeScript shapes are mirrored in `web/src/wasm.ts`.
    - `field` names the input at fault, so the interface can show the message next to it.
    - `missing` names the context item to reveal.
    - `message` is the library's own text: the `ConversionError` and `ParseUnitError` `Display` output.
-3. **Context is built in Rust, in the CLI's order.** Atmospheric pressure is built first so that gauge context
+3. **Context is built in Rust, in the CLI's order, and units are never assumed.** Atmospheric pressure is built first so that gauge context
    pressures can use it, and it accepts only absolute units. A gauge context pressure without an atmospheric
-   pressure reports `missing: "atmosphericPressure"` with `field` set to that pressure.
+   pressure reports `missing: "atmosphericPressure"` with `field` set to that pressure. A context value
+   typed without a unit is an `emptyInput` error for that field, so the interface never preselects one.
 4. **`used` makes stale context visible.**
    - After a successful conversion, Rust removes each supplied context item in turn and converts again. An item
      is used exactly when its removal causes an error, because the library never falls back to a default.
