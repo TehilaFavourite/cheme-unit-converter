@@ -1,0 +1,13 @@
+[package]
+name = "cheme-unit-converter"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "A unit-safe command-line converter for chemical engineering units"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/TehilaFavourite/cheme-unit-converter"
+keywords = ["chemical-engineering", "units", "conversion", "cli", "engineering"]
+categories = ["command-line-utilities", "science"]
+
+[dependencies]
