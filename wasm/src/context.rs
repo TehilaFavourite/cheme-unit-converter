@@ -58,6 +58,23 @@ impl ContextKey {
         })
     }
 
+    /// Returns the short query-string name the web interface uses for this
+    /// field, as in `?atm=101.325kPa`.
+    pub fn param(self) -> &'static str {
+        match self {
+            Self::Density => "d",
+            Self::MolarMass => "mm",
+            Self::SolventMolarMass => "smm",
+            Self::ReferenceDensity => "rd",
+            Self::AtmosphericPressure => "atm",
+            Self::ReferenceTemperature => "rt",
+            Self::ReferencePressure => "rp",
+            Self::Temperature => "t",
+            Self::Pressure => "p",
+            Self::CompressibilityFactor => "z",
+        }
+    }
+
     /// Returns the library item this key supplies.
     pub fn item(self) -> cheme_unit_converter::ContextItem {
         use cheme_unit_converter::ContextItem;

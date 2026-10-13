@@ -323,6 +323,8 @@ pub struct UnitEntry {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ContextEntry {
     pub key: ContextKey,
+    /// The query-string parameter that holds this field.
+    pub param: &'static str,
     /// The library's description of the item.
     pub description: &'static str,
     pub input: ContextInput,
@@ -364,6 +366,7 @@ pub fn catalogue() -> Catalogue {
         .into_iter()
         .map(|key| ContextEntry {
             key,
+            param: key.param(),
             description: key.item().description(),
             input: context_input(key),
         })
@@ -586,6 +589,13 @@ mod tests {
         let units: usize = catalogue.quantities.iter().map(|q| q.units.len()).sum();
         assert_eq!(units, Unit::all().len());
         assert_eq!(catalogue.context.len(), ContextKey::ALL.len());
+        // The web interface reserves v, q, from, to and sf for the main inputs.
+        let mut params: Vec<&str> = catalogue.context.iter().map(|entry| entry.param).collect();
+        params.extend(["v", "q", "from", "to", "sf"]);
+        let count = params.len();
+        params.sort_unstable();
+        params.dedup();
+        assert_eq!(params.len(), count, "query-string names must be unique");
         let atmosphere = catalogue
             .context
             .iter()

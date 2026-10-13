@@ -45,6 +45,7 @@ fn catalogue_lists_every_quantity_unit_and_context_item() {
     };
     assert_eq!(context.len(), 10);
     assert_eq!(context[0]["key"], "density");
+    assert_eq!(context[0]["param"], "d");
     assert_eq!(
         context[0]["input"],
         json!({ "kind": "number", "unit": "kg/m³" })
