@@ -1,0 +1,4 @@
+# Runs `cargo test --target wasm32-unknown-unknown` through wasm-bindgen's
+# test runner (installed with wasm-bindgen-cli).
+[target.wasm32-unknown-unknown]
+runner = "wasm-bindgen-test-runner"

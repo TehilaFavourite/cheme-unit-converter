@@ -1,0 +1,26 @@
+[package]
+name = "cheme-unit-converter-wasm"
+version = "0.1.0"
+edition = "2024"
+description = "WebAssembly bindings for cheme-unit-converter, used by its web interface"
+license = "MIT"
+repository = "https://github.com/TehilaFavourite/cheme-unit-converter"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+cheme-unit-converter = { path = ".." }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde-wasm-bindgen = "=0.6.5"
+# Must match the wasm-bindgen-cli version used to build (scripts/build-wasm.sh, CI).
+wasm-bindgen = "=0.2.129"
+
+[dev-dependencies]
+serde_json = "=1.0.154"
+wasm-bindgen-test = "=0.3.79"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"

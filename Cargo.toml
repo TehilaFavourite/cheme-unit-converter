@@ -11,3 +11,14 @@ keywords = ["chemical-engineering", "units", "conversion", "cli", "engineering"]
 categories = ["command-line-utilities", "science"]
 
 [dependencies]
+
+[workspace]
+members = ["wasm"]
+
+# Size-optimised build for the WebAssembly module. A separate profile keeps
+# the CLI's release build unchanged.
+[profile.wasm-release]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1
