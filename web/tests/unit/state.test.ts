@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  EMPTY_STATE,
   contextFields,
   parseState,
   serializeState,
@@ -13,6 +12,15 @@ import {
   type AppState,
   type ContextField,
 } from "../../src/state";
+
+const EMPTY_STATE: AppState = {
+  value: "",
+  quantity: "",
+  from: "",
+  to: "",
+  sigFigs: "",
+  context: {},
+};
 
 // A stand-in for the catalogue's context list. The real one comes from Rust;
 // these tests only need its shape.

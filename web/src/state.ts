@@ -23,15 +23,6 @@ export interface AppState {
   readonly context: Readonly<Record<string, ContextValue>>;
 }
 
-export const EMPTY_STATE: AppState = {
-  value: "",
-  quantity: "",
-  from: "",
-  to: "",
-  sigFigs: "",
-  context: {},
-};
-
 /** How each context field appears in the query string. */
 export interface ContextField {
   readonly key: string;
